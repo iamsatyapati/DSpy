@@ -23,3 +23,8 @@ class QuoteScapper(scrapy.Spider):
 			items['tag'] = tag
 
 			yield items
+
+		next_page = response.css("li.next a::attr(href)")
+
+		if next_page is not None:
+			yield response.follow(next_page, callback = self.parse)
