@@ -2,17 +2,13 @@
 
 import scrapy
 from ..items import DspyItem
-from scrapy.http import FormRequest
-from scrapy.utils.response import open_in_browser
-
 
 class QuoteScapper(scrapy.Spider):
 
 	name = "quotes"
-	start_urls = ['http://quotes.toscrape.com/login']
+	start_urls = ['http://quotes.toscrape.com/']
 
-	def start_scrapy(self,response):
-		open_in_browser(response)
+	def parse(self,response):
 
 		items = DspyItem()
 
@@ -28,10 +24,7 @@ class QuoteScapper(scrapy.Spider):
 
 			yield items
 
-	def parse(self,response):
-		token = response.css("form input::attr(value)").extract_first()
-		return FormRequest.from_response(response, formdata={
-			'csrf_token':token,
-			'username': 'iamuser',
-			'password':'I wont tell you'
-			}, callback=self.start_scrapy)
+		next_page = response.css("li.next a::attr(href)") 
+		# for pagination if pages present as integers, take a class variable as page number, add it to the base url after making it as a string
+		if next_page is not None:
+			yield response.follow(next_page, callback = self.parse)
